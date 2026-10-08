@@ -1,0 +1,55 @@
+{% load static %}
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f5f6fa">
+  <title>{% if mode == 'signup' %}Create your account{% else %}Sign in{% endif %} — DataNova AI</title>
+  <link rel="stylesheet" href="{% static 'shop/datanova.css' %}">
+</head>
+<body class="auth-page">
+  <main class="auth-layout">
+    <section class="auth-story" aria-label="DataNova AI">
+      <a class="brand auth-brand" href="{% url 'datanova:login' %}">
+        <span class="brand-mark" aria-hidden="true">N</span>
+        <span>data<span class="brand-light">nova</span><span class="brand-ai"> AI</span></span>
+      </a>
+      <div class="auth-story-content">
+        <span class="eyebrow auth-eyebrow"><span class="live-dot"></span> YOUR DATA. A CLEARER DIRECTION.</span>
+        <h1>Good data deserves a <span>brighter future.</span></h1>
+        <p>Bring your files together, discover the stories inside, and turn your next question into your next big idea.</p>
+        <div class="story-insight">
+          <span class="story-icon" aria-hidden="true">↗</span>
+          <div><strong>From raw data to real insight.</strong><span>Your AI-powered analytics workspace is just one sign-in away.</span></div>
+        </div>
+      </div>
+      <p class="auth-footer-note">Your personal data analytics workspace.</p>
+    </section>
+    <section class="auth-panel">
+      <div class="auth-form-wrap">
+        <span class="eyebrow">WELCOME TO DATANOVA</span>
+        <h2>{% if mode == 'signup' %}Create your workspace{% else %}Welcome back{% endif %}</h2>
+        <p class="auth-subtitle">{% if mode == 'signup' %}Your next great discovery starts here.{% else %}Sign in to pick up where your insights left off.{% endif %}</p>
+        {% for message in messages %}<div class="notice notice-success">{{ message }}</div>{% endfor %}
+        {% if form.non_field_errors %}<div class="notice notice-error" role="alert">{% for error in form.non_field_errors %}{{ error }}{% endfor %}</div>{% endif %}
+        <form method="post" class="auth-form">
+          {% csrf_token %}
+          {% if mode == 'login' %}<input type="hidden" name="next" value="{{ next }}">{% endif %}
+          {% for field in form %}
+            <label class="form-field" for="{{ field.id_for_label }}">
+              <span>{{ field.label }}</span>
+              {{ field }}
+              {% if field.help_text %}<small class="field-help">{{ field.help_text|safe }}</small>{% endif %}
+              {% for error in field.errors %}<small class="field-error">{{ error }}</small>{% endfor %}
+            </label>
+          {% endfor %}
+          <button class="button button-primary auth-submit" type="submit">{% if mode == 'signup' %}Create my account <span aria-hidden="true">→</span>{% else %}Sign in to DataNova <span aria-hidden="true">→</span>{% endif %}</button>
+        </form>
+        <p class="auth-switch">{% if mode == 'signup' %}Already have an account? <a href="{% url 'datanova:login' %}">Sign in</a>{% else %}New to DataNova? <a href="{% url 'datanova:signup' %}">Create an account</a>{% endif %}</p>
+        <p class="auth-local-note">Accounts are secured by Django’s built-in authentication.</p>
+      </div>
+    </section>
+  </main>
+</body>
+</html>

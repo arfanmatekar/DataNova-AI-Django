@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Checkout</title>
+</head>
+
+<body>
+
+<h1>Checkout</h1>
+
+<h2>
+Total ₹ {{ total }}
+</h2>
+
+<form method="POST">
+
+{% csrf_token %}
+
+<button>
+Place Order
+</button>
+
+</form>
+
+</body>
+</html>

@@ -1,0 +1,140 @@
+{% load static %}
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f5f6fa">
+  <title>{{ page_title }} — DataNova AI</title>
+  <link rel="stylesheet" href="{% static 'shop/datanova.css' %}">
+</head>
+<body class="workspace-page">
+  <form id="csrf-token" hidden>{% csrf_token %}</form>
+  <div id="workspace" class="app-shell" data-project-id="{{ active_project.pk|default:'' }}">
+    <aside class="sidebar" id="sidebar">
+      <a class="brand" href="{% url 'datanova:dashboard' %}">
+        <span class="brand-mark" aria-hidden="true">N</span>
+        <span>data<span class="brand-light">nova</span><span class="brand-ai"> AI</span></span>
+      </a>
+      <button class="workspace-switcher" type="button" aria-label="Active workspace">
+        <span class="workspace-switch-icon">✳</span>
+        <span class="workspace-switch-copy"><strong>Professional</strong><small>Workspace</small></span>
+        <span class="workspace-switch-chevron">⌄</span>
+      </button>
+      <p class="nav-label">WORKSPACE</p>
+      <nav class="side-nav" aria-label="Main navigation">
+        <a class="side-link {% if not active_project %}side-link-active{% endif %}" href="{% url 'datanova:dashboard' %}"><span class="side-icon" aria-hidden="true">▦</span>Overview</a>
+        <a class="side-link" href="{% url 'datanova:dashboard' %}#projects"><span class="side-icon" aria-hidden="true">▧</span>My projects<span class="nav-count" id="nav-project-count">0</span></a>
+        {% if active_project %}<a class="side-link side-link-active" href="{% url 'datanova:project-detail' active_project.pk %}"><span class="side-icon" aria-hidden="true">◈</span>{{ active_project.name|truncatechars:20 }}</a>{% endif %}
+      </nav>
+      <div class="sidebar-divider"></div>
+      <div class="milestone-heading"><span class="nav-label">YOUR LEARNING</span><span class="sparkle" aria-hidden="true">✳</span></div>
+      <div class="learning-card">
+        <div class="learning-score-row"><span>Learning score</span><strong id="learning-score">{{ learning_payload.score }}%</strong></div>
+        <div class="score-track"><span id="learning-progress" style="width: {{ learning_payload.score }}%"></span></div>
+        <span class="learning-caption" id="learning-caption">{{ learning_payload.completed }} of {{ learning_payload.total }} milestones complete</span>
+      </div>
+      <p class="nav-label milestones-label">NEXT MILESTONES</p>
+      <ul class="milestone-list" id="milestone-list">
+        {% for milestone in learning_payload.milestones %}
+        <li class="milestone-item {% if milestone.completed %}milestone-done{% endif %}">
+          <button type="button" class="milestone-check" data-milestone-id="{{ milestone.id }}" aria-label="{% if milestone.completed %}Mark incomplete{% else %}Complete{% endif %}: {{ milestone.title }}" aria-pressed="{{ milestone.completed|yesno:'true,false' }}">{% if milestone.completed %}✓{% endif %}</button>
+          <span class="milestone-copy"><strong>{{ milestone.title }}</strong><small>{{ milestone.description }}</small></span>
+        </li>
+        {% endfor %}
+      </ul>
+      <div class="sidebar-spacer"></div>
+      <div class="help-card"><span class="help-icon" aria-hidden="true">?</span><span><strong>Curious about your data?</strong><small>Ask a question. Get a clear answer.</small></span></div>
+      <div class="sidebar-user">
+        <span class="avatar">{{ request.user.username|first|upper }}</span>
+        <span class="sidebar-user-copy"><strong>{{ request.user.get_full_name|default:request.user.username|truncatechars:20 }}</strong><small>{% if request.user.is_superuser %}Administrator{% else %}Data analyst{% endif %}</small></span>
+        <form method="post" action="{% url 'datanova:logout' %}">{% csrf_token %}<button class="icon-button logout-button" type="submit" aria-label="Sign out" title="Sign out">↪</button></form>
+      </div>
+    </aside>
+
+    <main class="main-area">
+      <header class="topbar">
+        <button class="icon-button mobile-menu" id="mobile-menu" type="button" aria-label="Toggle navigation">☰</button>
+        <div class="breadcrumb"><span>Workspace</span><span class="breadcrumb-divider">/</span><strong>{% if active_project %}{{ active_project.name }}{% else %}Overview{% endif %}</strong></div>
+        <div class="topbar-actions">
+          <label class="search-box" for="project-search"><span aria-hidden="true">⌕</span><input id="project-search" type="search" placeholder="Search projects…" aria-label="Search projects"><kbd>⌘ K</kbd></label>
+          <button class="workspace-pill" type="button"><span class="workspace-pill-dot"></span>Professional workspace<span aria-hidden="true">⌄</span></button>
+          <div class="notification-wrap"><button class="icon-button notification-button" id="notification-button" type="button" aria-label="Notifications">♧<span class="notification-dot"></span></button><div class="notification-popover" id="notification-popover" hidden><strong>All caught up!</strong><span>Your workspace notifications will appear here.</span></div></div>
+          <span class="topbar-avatar" title="{{ request.user.username }}">{{ request.user.username|first|upper }}</span>
+        </div>
+      </header>
+
+      <div class="page-content">
+        <section class="welcome-row">
+          <div><span class="eyebrow"><span class="live-dot"></span> YOUR DATA, IN GOOD COMPANY</span><h1>{% if active_project %}<a class="back-link" href="{% url 'datanova:dashboard' %}" aria-label="Back to projects">←</a> {{ active_project.name }}{% else %}Good to see you, {{ request.user.first_name|default:request.user.username }} <span class="wave" aria-hidden="true">✳</span>{% endif %}</h1><p>{% if active_project %}Upload data, ask a question, and discover what your project is telling you.{% else %}One clear view of your projects, progress, and what’s possible next.{% endif %}</p></div>
+          {% if not active_project %}<button class="button button-primary" id="new-project-button" type="button"><span aria-hidden="true">＋</span> New project</button>{% endif %}
+          {% if active_project %}<button class="button button-secondary" id="download-report" type="button"><span aria-hidden="true">↓</span> Generate report</button>{% endif %}
+        </section>
+
+        <section class="stats-grid" aria-label="Workspace statistics">
+          <article class="stat-card"><span class="stat-icon stat-icon-violet" aria-hidden="true">▦</span><span class="stat-label">Total projects</span><strong class="stat-value" id="stat-total">0</strong><span class="stat-hint">Across your workspace</span></article>
+          <article class="stat-card"><span class="stat-icon stat-icon-blue" aria-hidden="true">◉</span><span class="stat-label">Active projects</span><strong class="stat-value" id="stat-active">0</strong><span class="stat-hint">In progress right now</span></article>
+          <article class="stat-card"><span class="stat-icon stat-icon-green" aria-hidden="true">✓</span><span class="stat-label">Completed</span><strong class="stat-value" id="stat-completed">0</strong><span class="stat-hint">Ready to celebrate</span></article>
+          <article class="stat-card stat-score-card"><span class="stat-icon stat-icon-amber" aria-hidden="true">✳</span><span class="stat-label">Learning score</span><strong class="stat-value" id="stat-score">{{ learning_payload.score }}<span class="stat-percent">%</span></strong><span class="stat-hint">Your curiosity is paying off</span></article>
+        </section>
+
+        {% if not active_project %}
+        <section class="projects-section" id="projects">
+          <div class="section-heading"><div><h2>Your projects <span class="count-chip" id="visible-project-count">0</span></h2><p>Every good discovery starts with a project.</p></div><div class="project-filters"><label class="filter-search" for="project-search-secondary"><span aria-hidden="true">⌕</span><input id="project-search-secondary" type="search" placeholder="Search projects…" aria-label="Search projects"></label><select id="status-filter" class="status-select" aria-label="Filter projects by status"><option value="all">All statuses</option><option value="planning">Planning</option><option value="active">Active</option><option value="completed">Completed</option></select></div></div>
+          <div class="project-grid" id="project-grid"></div>
+          <div class="empty-state" id="empty-state" hidden><span class="empty-icon" aria-hidden="true">⌕</span><h3>No projects match that search</h3><p>Try a different name or status filter.</p><button class="button button-secondary" id="clear-filters" type="button">Clear filters</button></div>
+          <div class="empty-state" id="first-project-state" hidden><span class="empty-icon empty-icon-brand" aria-hidden="true">✳</span><h3>Your first big idea starts here.</h3><p>Create a project and bring your data story to life.</p><button class="button button-primary" id="empty-new-project" type="button">Create your first project</button></div>
+        </section>
+        {% else %}
+        <section class="detail-page">
+          <div class="detail-overview">
+            <div class="section-heading detail-section-heading"><div><h2>Your data story</h2><p>Good questions make great discoveries.</p></div><span class="status-badge" id="detail-status" data-status="{{ active_project.status }}">{{ active_project.get_status_display }}</span></div>
+            <div class="detail-description">{% if active_project.description %}{{ active_project.description }}{% else %}Your workspace for exploring the data that matters.{% endif %}</div>
+            <div class="dataset-workspace">
+              <div class="dataset-panel"><div class="panel-heading"><div><h3>Dataset preview</h3><p id="dataset-caption">Upload a file to start exploring.</p></div><button class="button button-secondary button-small" id="upload-trigger" type="button"><span aria-hidden="true">↑</span> Upload data</button><input type="file" id="dataset-file" accept=".csv,.xlsx,.json,application/json,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" aria-label="Choose a CSV, Excel, or JSON data file" hidden></div>
+                <div class="upload-dropzone" id="upload-dropzone" tabindex="0" role="button" aria-label="Upload a CSV, Excel, or JSON dataset. You can also drag a file here."><span class="upload-icon" aria-hidden="true">↑</span><strong>Drop a file to explore your data</strong><span>or <button type="button" class="text-button" id="browse-files">browse your files</button></span><small>CSV, Excel, or JSON · up to 5 MB</small></div>
+                <div class="table-wrap" id="dataset-table-wrap" hidden><table class="data-table"><thead id="dataset-head"></thead><tbody id="dataset-body"></tbody></table></div>
+                <div class="table-footer" id="table-footer" hidden><span id="table-page-caption"></span><div class="pagination"><button class="icon-button pagination-button" id="page-previous" type="button" aria-label="Previous page">←</button><span id="page-indicator"></span><button class="icon-button pagination-button" id="page-next" type="button" aria-label="Next page">→</button></div></div>
+                <div class="upload-status" id="upload-status" role="status" aria-live="polite"></div>
+              </div>
+              <div class="ai-panel"><div class="ai-panel-top"><span class="ai-badge" aria-hidden="true">✳</span><div><h3>Ask your data</h3><p>Clear answers, from what’s actually in your file.</p></div></div><div class="chat-messages" id="chat-messages"><div class="chat-greeting"><span class="chat-avatar" aria-hidden="true">✳</span><p>Hi! I’ve got your dataset. Ask me about a total, a trend, or anything that looks a little unusual.</p></div></div><div class="prompt-chips" id="prompt-chips"><button class="prompt-chip" type="button" data-prompt="Show me the trends">Show trends</button><button class="prompt-chip" type="button" data-prompt="Calculate total sales">Total sales</button><button class="prompt-chip" type="button" data-prompt="Find anomalies">Find anomalies</button></div><form class="chat-form" id="chat-form"><label class="visually-hidden" for="chat-input">Ask a question about your dataset</label><input id="chat-input" type="text" maxlength="500" placeholder="Ask anything about your data…" {% if not dataset_payload %}disabled{% endif %}><button class="chat-submit" type="submit" aria-label="Send question" {% if not dataset_payload %}disabled{% endif %}>↑</button></form><span class="ai-disclaimer">Answers are calculated directly from your dataset.</span></div>
+            </div>
+          </div>
+          <div class="charts-heading"><div><h2>Visualize the bigger picture</h2><p id="charts-caption">Charts update automatically when you upload a dataset.</p></div><span class="chart-live-badge"><span class="live-dot"></span> LIVE FROM YOUR DATA</span></div>
+          <div class="charts-grid">
+            <article class="chart-card"><div class="chart-card-header"><div><span class="chart-eyebrow">AT A GLANCE</span><h3 id="bar-chart-title">Your data, in numbers</h3></div><span class="chart-more" aria-hidden="true">···</span></div><div class="canvas-wrap"><canvas id="bar-chart" aria-label="Bar chart comparing your first numeric data field"></canvas><div class="chart-empty" id="bar-chart-empty">Upload a dataset to bring this chart to life.</div></div><div class="chart-legend" id="bar-chart-legend"></div></article>
+            <article class="chart-card"><div class="chart-card-header"><div><span class="chart-eyebrow">ROW BY ROW</span><h3 id="line-chart-title">Follow the trend</h3></div><span class="chart-more" aria-hidden="true">···</span></div><div class="canvas-wrap"><canvas id="line-chart" aria-label="Line chart showing how your data changes"></canvas><div class="chart-empty" id="line-chart-empty">Your data’s next chapter will show up here.</div></div><div class="chart-legend" id="line-chart-legend"></div></article>
+            <article class="chart-card pie-chart-card"><div class="chart-card-header"><div><span class="chart-eyebrow">THE BREAKDOWN</span><h3 id="pie-chart-title">See what makes it up</h3></div><span class="chart-more" aria-hidden="true">···</span></div><div class="canvas-wrap"><canvas id="pie-chart" aria-label="Donut chart showing the proportion of each category"></canvas><div class="chart-empty" id="pie-chart-empty">Your category breakdown is waiting.</div><div class="donut-center" id="donut-center" hidden><span>ACROSS</span><strong id="donut-total">0</strong><small>records</small></div></div><div class="chart-legend chart-legend-pie" id="pie-chart-legend"></div></article>
+          </div>
+          <section class="detail-bottom"><div class="milestone-inline"><span class="mini-sparkle" aria-hidden="true">✳</span><span><strong>Progress worth celebrating</strong><small id="detail-learning-caption">{{ learning_payload.completed }} of {{ learning_payload.total }} learning milestones complete.</small></span><strong class="milestone-inline-score" id="detail-learning-score">{{ learning_payload.score }}%</strong></div><button class="text-button back-projects" type="button" onclick="window.location.href='{% url 'datanova:dashboard' %}'">← Back to all projects</button></section>
+        </section>
+        {% endif %}
+      </div>
+    </main>
+  </div>
+
+  <div class="modal-backdrop" id="project-modal" hidden>
+    <section class="project-modal" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+      <button class="icon-button modal-close" id="modal-close" type="button" aria-label="Close dialog">×</button>
+      <span class="modal-icon" aria-hidden="true">✳</span>
+      <span class="eyebrow">A NEW CHAPTER</span>
+      <h2 id="modal-title">Create a project</h2>
+      <p>Give your next discovery a place to grow.</p>
+      <form class="project-form" id="project-form">
+        <label class="form-field" for="project-name"><span>Project name <i>*</i></span><input id="project-name" name="name" maxlength="80" placeholder="e.g. Q3 sales analysis" required></label>
+        <label class="form-field" for="project-description"><span>Description <small>Optional</small></span><textarea id="project-description" name="description" rows="3" maxlength="2000" placeholder="What do you hope to uncover?"></textarea></label>
+        <label class="form-field" for="project-status"><span>Status</span><select id="project-status" name="status"><option value="planning">Planning</option><option value="active">Active</option><option value="completed">Completed</option></select></label>
+        <span class="form-error" id="project-form-error" role="alert"></span>
+        <div class="modal-actions"><button class="button button-secondary" id="modal-cancel" type="button">Cancel</button><button class="button button-primary" id="project-submit" type="submit">Create project <span aria-hidden="true">→</span></button></div>
+      </form>
+    </section>
+  </div>
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  {{ projects_payload|json_script:"project-data" }}
+  {{ learning_payload|json_script:"learning-data" }}
+  {{ dataset_payload|json_script:"dataset-data" }}
+  {{ summary_payload|json_script:"summary-data" }}
+  <script src="{% static 'shop/datanova.js' %}" defer></script>
+</body>
+</html>
